@@ -1,0 +1,7 @@
+[target.thumbv8m.main-none-eabihf]
+runner = ["sh", "-c", "probe-rs download --chip MCXA156 $0 && probe-rs reset --chip MCXA156"]
+rustflags = [
+    "-C", "link-arg=-Tlink.x",
+]
+[build]
+target = "thumbv8m.main-none-eabihf"

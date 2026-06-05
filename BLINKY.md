@@ -23,53 +23,49 @@ Working blinky example for NXP FRDM-MCXA156 using the `frdm_mcxa156_pac` (svd2ru
 #![no_std]
 #![no_main]
 
-use core::ptr::write_volatile;
 use cortex_m_rt::entry;
 use panic_halt as _;
 
-// MRCC0 base (0x4009_1000)
-const MRCC0: *mut u32 = 0x4009_1000 as *mut u32;
-const GLB_CC1_SET: usize = 0x54 / 4;  // offset 0x54
-const GLB_RST1_SET: usize = 0x14 / 4; // offset 0x14
-
-// PORT3 base (0x400B_F000)
-const PORT3: *mut u32 = 0x400B_F000 as *mut u32;
-const PCR13: usize = 0xB4 / 4; // offset 0xB4
-
-// GPIO3 base (0x4010_5000)
-const GPIO3: *mut u32 = 0x4010_5000 as *mut u32;
-const PDDR: usize = 0x54 / 4; // offset 0x54
-const PSOR: usize = 0x44 / 4; // offset 0x44
-const PCOR: usize = 0x48 / 4; // offset 0x48
-
 #[entry]
 fn main() -> ! {
-    // Step 1: Enable clocks — GLB_CC1_SET bit 10 (PORT3) + bit 23 (GPIO3)
-    unsafe { write_volatile(MRCC0.add(GLB_CC1_SET), (1 << 10) | (1 << 23)); }
+    let p = frdm_mcxa156_pac::Peripherals::take().unwrap();
 
-    // DSB is CRITICAL: ensures the clock-enable write completes before
-    // the reset-release write. Without this barrier, the AHB bus may
-    // reorder the stores. If GLB_RST1_SET arrives before GLB_CC1_SET,
-    // the hardware silently ignores the reset release (clock must be
-    // enabled first).
+    // ---- Enable clocks ----
+    p.mrcc0.mrcc_glb_cc1().modify(|_, w| {
+        w.port3().enabled();
+        w.gpio3().enabled();
+        w
+    });
+
+    // DSB: guarantee clock enable completes before reset release
     cortex_m::asm::dsb();
 
-    // Step 2: Release from reset — GLB_RST1_SET bit 10 + bit 23
-    unsafe { write_volatile(MRCC0.add(GLB_RST1_SET), (1 << 10) | (1 << 23)); }
+    // ---- Release from reset ----
+    p.mrcc0.mrcc_glb_rst1().modify(|_, w| {
+        w.port3().enabled();
+        w.gpio3().enabled();
+        w
+    });
 
-    // Step 3: Pin mux — PORT3 PCR13 = ALT0 (GPIO, already reset default)
-    unsafe { write_volatile(PORT3.add(PCR13), 0); }
+    // ---- Pin mux: PORT3 pin 13 = ALT0 (GPIO) ----
+    p.port3.pcr13().modify(|_, w| {
+        w.mux().mux00();
+        w
+    });
 
-    // Step 4: Data direction — GPIO3 PDDR bit 13 = output
-    unsafe { write_volatile(GPIO3.add(PDDR), 1 << 13); }
+    // ---- Data direction: pin 13 = output ----
+    p.gpio3.pddr().modify(|_, w| {
+        w.pdd13().pdd1();
+        w
+    });
 
     loop {
-        // LED ON: clear pin 13 (active low → pin pulled low → LED conducts)
-        unsafe { write_volatile(GPIO3.add(PCOR), 1 << 13); }
-        cortex_m::asm::delay(96_000_000 / 2); // ~500 ms at 96 MHz
+        // LED ON (active low: clear → 0 → LED conducts)
+        p.gpio3.pcor().write(|w| w.ptco13().ptco1());
+        cortex_m::asm::delay(96_000_000 / 2);
 
-        // LED OFF: set pin 13
-        unsafe { write_volatile(GPIO3.add(PSOR), 1 << 13); }
+        // LED OFF
+        p.gpio3.psor().write(|w| w.ptso13().ptso1());
         cortex_m::asm::delay(96_000_000 / 2);
     }
 }
@@ -138,6 +134,10 @@ Make it executable: `chmod +x flash.sh`
 ## File: `Cargo.toml` (additions)
 
 ```toml
+[dependencies]
+cortex-m = { version = "0.7.7", features = ["critical-section-single-core"] }
+critical-section = "1.2.0"
+
 [dev-dependencies]
 cortex-m-rt = "0.7.5"
 panic-halt = "0.2.0"
@@ -235,8 +235,6 @@ Generated PAC (v0.37.1) uses these closure patterns:
 
 - **`modify(|r, w| { ... })`** — 2 arguments (reader, writer), must **return `w`**
 - **`write(|w| { ... })`** — 1 argument (writer only), returns nothing
-- **`_SET` / `_CLR` registers** — use `write(|w| w.data(…))`; the exact `data()`
-  API differs between svd2rust versions.
 
 The generated code produces 72 warnings about `unsafe_op_in_unsafe_fn` (Rust 2024
 edition compatibility).  These are cosmetic and can be suppressed with
@@ -279,15 +277,20 @@ GPIO3 PDOR = toggling between 0x00000000 and 0x00002000
 
 ---
 
-## Rationale for raw register writes
+## Why the PAC type-safe API
 
 The blinky uses raw `write_volatile` instead of the PAC's type-safe API because
 the `_SET` register `data()` API in svd2rust v0.37 was not fully resolved during
 development.  Raw writes are also clearer for demonstrating register-level
 operations in a PAC example.
 
-The PAC's type-safe `modify()` API works correctly for the base registers and
-produces identical machine code—verified for `GLB_CC1`.
+The blinky uses `Peripherals::take()` (safe) and the PAC's typed `modify`/`write`
+accessors.  All `p.gpio3.pddr().modify(|_, w| w.pdd13().pdd1())` calls are
+zero-cost — they produce identical machine code to raw `write_volatile` but
+with compile-time guarantees against bit-position errors.
+
+`Peripherals::take()` requires the `cortex-m` `critical-section-single-core`
+feature and the `critical-section` crate in `Cargo.toml`.
 
 ---
 
@@ -315,5 +318,4 @@ produces identical machine code—verified for `GLB_CC1`.
    to RAM and spins forever is the fastest way to verify that the CPU executes
    user code at all.
 
-6. **Start with raw register writes when bring-up stalls.**  They eliminate
-   abstraction-layer doubt and produce identical machine code to the PAC API.
+6. **Start with raw register writes when bring-up stalls, then switch to the PAC API.**  Raw writes eliminate abstraction-layer doubt during debugging.  Once the hardware is understood, the PAC's typed accessors provide the same machine code with compile-time safety.

@@ -42,3 +42,5 @@ datasheet.pdf
 
 # J-Link flash script (board-specific)
 flash.jlink
+
+BLINKY.md

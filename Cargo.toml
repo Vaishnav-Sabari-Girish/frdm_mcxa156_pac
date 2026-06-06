@@ -1,7 +1,13 @@
 [package]
 name = "frdm_mcxa156_pac"
-version = "0.1.0"
+version = "0.3.0"
 edition = "2024"
+authors = ["Vaishnav Sabari Girish <vaishnav.sabari.girish@gmail.com>"]
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+description = "A Peripheral Access Crate for the NXP FRDM MCXA156 development board"
+homepage = "https://github.com/Vaishnav-Sabari-Girish/frdm_mcxa156_pac"
+repository = "https://github.com/Vaishnav-Sabari-Girish/frdm_mcxa156_pac"
 
 [dependencies]
 cortex-m = { version = "0.7.7", features = ["critical-section-single-core"] }

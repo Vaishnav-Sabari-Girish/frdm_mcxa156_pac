@@ -1,7 +1,7 @@
-# `mcxa156-pac` — Peripheral Access Crate for NXP MCXA156
+# `frdm-mcxa156-pac` — Peripheral Access Crate for NXP MCXA156
 
-[![crates.io](https://img.shields.io/crates/v/mcxa156-pac.svg)](https://crates.io/crates/mcxa156-pac)
-[![docs.rs](https://docs.rs/mcxa156-pac/badge.svg)](https://docs.rs/mcxa156-pac)
+> [!WARNING]
+> Not published to `crates.io` yet so please clone the repo and run the examples or write your own.
 
 Low-level register mappings for the **NXP MCXA156** Arm® Cortex®-M33 microcontroller, generated from NXP's official CMSIS-SVD file.
 
@@ -78,8 +78,8 @@ cargo install svd2rust
 cargo install form
 
 # Download SVD
-curl -L -o svd/MCXA156.xml \
-  https://raw.githubusercontent.com/nxp-mcuxpresso/mcux-soc-svd/refs/heads/release/25.06.00/MCXA156/MCXA156.xml
+curl -L -o svd/MCXA156.xml \ 
+    https://raw.githubusercontent.com/nxp-mcuxpresso/mcux-soc-svd/refs/heads/release/25.06.00/MCXA156/MCXA156.xml
 
 # Generate PAC
 svd2rust -i svd/MCXA156.xml \

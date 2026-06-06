@@ -38,26 +38,9 @@ frdm-mcxa156-pac = { version = "0.1.0", features = ["portable-atomic"] }
 
 ### Example
 
-```rust
-#![no_std]
-#![no_main]
+You can view the example code in the `examples` directory. 
 
-use frdm_mcxa156_pac::Peripherals;
-use cortex_m_rt::entry;
-use panic_halt as _;
-
-#[entry]
-fn main() -> ! {
-    let p = Peripherals::take().unwrap();
-
-    // Access a peripheral
-    let gpio = &p.GPIO0;
-
-    loop {
-        // Your application logic here
-    }
-}
-```
+For examples list, you can check the [README.md](./examples/README.md) in the `examples` directory.
 
 ## Prerequisites
 

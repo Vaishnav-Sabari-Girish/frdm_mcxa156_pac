@@ -109,3 +109,4 @@ rather have some AI generated boilerplate than none at all.
 * **Micro-improvements:** I have used AI as an advisor to improve some bits of
 code here and there. Big refactors or new features are done by my hand though.
 
+![img](https://brainmade.org/black-logo.svg)

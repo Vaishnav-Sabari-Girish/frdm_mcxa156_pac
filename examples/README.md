@@ -14,3 +14,4 @@
 ## Button 
 
 1. [Button Press](./button.rs)
+2. [Two Buttons](./two_buttons.rs)

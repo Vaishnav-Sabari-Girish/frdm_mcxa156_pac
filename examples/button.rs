@@ -9,8 +9,6 @@ fn main() -> ! {
     let p = frdm_mcxa156_pac::Peripherals::take().unwrap();
 
     // 1. Enable Clocks for Port 1/GPIO1 (Button) and Port 3/GPIO3 (LED)
-    // NOTE: Depending on the MCXA156 register map, PORT1/GPIO1 might be in glb_cc0 instead of
-    // glb_cc1 
     p.mrcc0.mrcc_glb_cc1().modify(|_, w| {
         w.port1().enabled();
         w.gpio1().enabled();

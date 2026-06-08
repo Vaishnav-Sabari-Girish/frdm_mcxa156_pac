@@ -98,3 +98,14 @@ at your option.
 ---
 
 **Disclaimer:** This is an individual effort, not an official NXP project. The PAC is generated from NXP's publicly available SVD file.
+
+## 🧠 (mostly) Brain made
+
+**This project was NOT vibe-coded BUT AI is still involved in some parts of
+it.**
+
+* **Generating boilerplate code:** Because it's something I always skip so I would
+rather have some AI generated boilerplate than none at all.
+* **Micro-improvements:** I have used AI as an advisor to improve some bits of
+code here and there. Big refactors or new features are done by my hand though.
+
